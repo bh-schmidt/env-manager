@@ -8,7 +8,7 @@
 		<Nullable>disable</Nullable>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-		<Version>0.0.3</Version>
+		<Version>0.0.4</Version>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>envm</ToolCommandName>
 		<PackageOutputPath>./nupkg</PackageOutputPath>

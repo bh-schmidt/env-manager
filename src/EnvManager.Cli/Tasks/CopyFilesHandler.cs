@@ -28,7 +28,7 @@ namespace EnvManager.Tasks
             Console.WriteLine("Copying files.");
             Console.WriteLine($"Source folder: '{sourceFolder}'");
             Console.WriteLine($"Target folder: '{targetFolder}'");
-            Console.WriteLine($"Overwrite files: '{setting.Overwrite}'");
+            Console.WriteLine($"Overwrite files: '{setting.FileExistsAction}'");
             Console.WriteLine($"\nInclude patterns:");
             foreach (var item in setting.Files)
                 Console.WriteLine($"\t{item}");
@@ -63,9 +63,17 @@ namespace EnvManager.Tasks
                         Directory.CreateDirectory(fileTargetFolder);
 
                     if (File.Exists(targetPath))
-                        File.SetAttributes(targetPath, FileAttributes.Normal);
+                    {
+                        if(setting.FileExistsAction is CopyFilesTask.OverwriteAction.Throw)
+                            throw new IOException($"The file '{targetPath}' already exists");
 
-                    File.Copy(sourcePath, targetPath, setting.Overwrite);
+                        if (setting.FileExistsAction is CopyFilesTask.OverwriteAction.Ignore)
+                            continue;
+
+                        File.SetAttributes(targetPath, FileAttributes.Normal);
+                    }
+
+                    File.Copy(sourcePath, targetPath, true);
                 }
             }
         }

@@ -7,7 +7,7 @@
       "files": [
         "**/*.json"
       ],
-      "overwrite": true,
+      "fileExistsAction": "overwrite",
       "ignoreList": [
         "Inside/file-2.json",
         "./file-3.json"
@@ -28,7 +28,7 @@
         "Inside/file-2.json",
         "./file-3.json"
       ],
-      "overwrite": true,
+      "fileExistsAction": "overwrite",
       "ignoreList": [],
       "validations": {
         "doNotCopy": {
