@@ -1,0 +1,42 @@
+{
+  "Tasks": [
+    {
+      "name": "CopyFiles",
+      "sourceFolder": "./TestFolder/Source",
+      "targetFolder": "./TestFolder/Target",
+      "files": [
+        "**/*.json"
+      ],
+      "overwrite": true,
+      "ignoreList": [
+        "Inside/file-2.json",
+        "./file-3.json"
+      ],
+      "validations": {
+        "doNotCopy": {
+          "anyFileExists": [
+            "/TestFolder/TargetFolder/file-4.json"
+          ]
+        }
+      }
+    },
+    {
+      "name": "CopyFiles",
+      "sourceFolder": "./TestFolder/Source",
+      "targetFolder": "./TestFolder/Target",
+      "files": [
+        "Inside/file-2.json",
+        "./file-3.json"
+      ],
+      "overwrite": true,
+      "ignoreList": [],
+      "validations": {
+        "doNotCopy": {
+          "anyFileExists": [
+            "/TestFolder/TargetFolder/file-4.json"
+          ]
+        }
+      }
+    }
+  ]
+}

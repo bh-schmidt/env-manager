@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EnvManager": {
+      "commandName": "Project",
+      "commandLineArgs": "run ./Samples/sample-1.json"
+    }
+  }
+}
