@@ -54,27 +54,31 @@ namespace EnvManager.Tasks
                 var targetPath = Path.Combine(targetFolder, file);
                 var fileTargetFolder = Path.GetDirectoryName(targetPath);
 
+
+                if (!preview && !Directory.Exists(fileTargetFolder))
+                    Directory.CreateDirectory(fileTargetFolder);
+
+                if (File.Exists(targetPath))
+                {
+                    if (setting.FileExistsAction is CopyFilesTask.OverwriteAction.Throw)
+                        throw new IOException($"The file '{targetPath}' already exists");
+
+                    if (setting.FileExistsAction is CopyFilesTask.OverwriteAction.Ignore)
+                    {
+                        if (verbose)
+                            Console.WriteLine($"File already exists (ignored): '{sourcePath}");
+                        continue;
+                    }
+
+                    if (!preview)
+                        File.SetAttributes(targetPath, FileAttributes.Normal);
+                }
+
                 if (verbose)
                     Console.WriteLine($"Copying file: '{sourcePath}");
 
                 if (!preview)
-                {
-                    if (!Directory.Exists(fileTargetFolder))
-                        Directory.CreateDirectory(fileTargetFolder);
-
-                    if (File.Exists(targetPath))
-                    {
-                        if(setting.FileExistsAction is CopyFilesTask.OverwriteAction.Throw)
-                            throw new IOException($"The file '{targetPath}' already exists");
-
-                        if (setting.FileExistsAction is CopyFilesTask.OverwriteAction.Ignore)
-                            continue;
-
-                        File.SetAttributes(targetPath, FileAttributes.Normal);
-                    }
-
                     File.Copy(sourcePath, targetPath, true);
-                }
             }
         }
 
