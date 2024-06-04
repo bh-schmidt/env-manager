@@ -2,6 +2,16 @@
   "Tasks": [
     {
       "name": "CopyFiles",
+      "sourceFolder": "/c/_publish/_prd/study-tools/_cd/",
+      "targetFolder": "~/OneDrive/_backup/_env/apps/study-tools/_cd",
+      "files": [
+        "**/*"
+      ],
+      "fileExistsAction": "overwrite",
+      "ignoreList": []
+    },
+    {
+      "name": "CopyFiles",
       "sourceFolder": "./TestFolder/Source",
       "targetFolder": "./TestFolder/Target",
       "files": [

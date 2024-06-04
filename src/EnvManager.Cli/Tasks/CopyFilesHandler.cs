@@ -156,20 +156,21 @@ namespace EnvManager.Tasks
             {
                 var dirs = Directory.GetDirectories(currentDir);
 
+                PathMatcher newMatcher = new()
+                {
+                    Pattern = matcher.Pattern,
+                    SourceFolder = matcher.SourceFolder,
+                    Parts = matcher.Parts[1..]
+                };
+
+                var found1 = HandleMatcher(currentDir, newMatcher);
+                files.AddRange(found1);
+
                 foreach (var dir in dirs)
                 {
-                    PathMatcher newMatcher = new()
-                    {
-                        Pattern = matcher.Pattern,
-                        SourceFolder = matcher.SourceFolder,
-                        Parts = matcher.Parts[1..]
-                    };
-
-                    var found1 = HandleMatcher(currentDir, newMatcher);
                     var found2 = HandleMatcher(dir, newMatcher);
                     var found3 = HandleMatcher(dir, matcher);
 
-                    files.AddRange(found1);
                     files.AddRange(found2);
                     files.AddRange(found3);
                 }
