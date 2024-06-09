@@ -16,6 +16,7 @@
 
 	<PropertyGroup>
 		<PackageReadmeFile>Readme.md</PackageReadmeFile>
+		<Description>A simple pipeline-like CLI that helps you set up your environment.</Description>
 		<!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
 		<PackageTags>EnvManager.Cli;Environment;Workstation</PackageTags>
 		<PackageProjectUrl>https://github.com/bh-schmidt/env-manager</PackageProjectUrl>
