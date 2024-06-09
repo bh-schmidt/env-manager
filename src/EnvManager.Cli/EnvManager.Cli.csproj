@@ -8,7 +8,7 @@
 		<Nullable>disable</Nullable>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-		<Version>0.0.5</Version>
+		<Version>0.0.6</Version>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>envm</ToolCommandName>
 		<PackageOutputPath>./nupkg</PackageOutputPath>
@@ -35,12 +35,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ImprovedConsole" Version="0.0.6" />
+		<PackageReference Include="ImprovedConsole" Version="0.0.7" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Include="docs\Readme.md" Pack="true" PackagePath="\">
+	  <None Include="..\..\Readme.md" Pack="true" PackagePath="\">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

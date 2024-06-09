@@ -4,10 +4,16 @@ using ImprovedConsole.CommandRunners.Arguments;
 using ImprovedConsole.CommandRunners.Commands;
 using Newtonsoft.Json;
 
-var builder = new InlineCommandBuilder();
-builder.AddCommand("run", "Executes the settings configured in the json file", run =>
+var builder = new CommandBuilder(new CommandBuilderOptions()
+{
+    CliName = "envm"
+});
+
+builder.AddCommand(run =>
 {
     run
+        .WithName("run")
+        .WithDescription("Executes the settings configured in the json file")
         .AddParameter("json-template", "Json file containing all the settings")
         .AddFlag("-v", "Enables the verbose mode for logs")
         .AddFlag("-p", "Preview the execution of the settings configured in the json file")
