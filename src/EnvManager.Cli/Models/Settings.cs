@@ -1,7 +1,7 @@
-﻿using EnvManager.Models.Tasks;
+﻿using EnvManager.Cli.Models.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace EnvManager.Models
+namespace EnvManager.Cli.Models
 {
     internal class Settings
     {

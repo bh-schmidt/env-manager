@@ -1,10 +1,10 @@
 ﻿using EnvManager.Cli.Common;
-using EnvManager.Cli.Tasks;
+using EnvManager.Cli.Handlers.Files;
 using ImprovedConsole.CommandRunners.Arguments;
 
-namespace EnvManager.Cli.Models.Tasks
+namespace EnvManager.Cli.Models.Files
 {
-    public class CopyFilesTask : ITask
+    public class CopyFilesStep : IStep
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -16,7 +16,7 @@ namespace EnvManager.Cli.Models.Tasks
         public IEnumerable<string> IgnoreList { get; set; }
         public OverwriteAction FileExistsAction { get; set; }
 
-        public void Run(CommandArguments arguments, PipeLogger logger)
+        public void Run(CommandArguments arguments)
         {
             if (Files is null || !Files.Any())
                 Files = ["**/*"];
@@ -32,7 +32,7 @@ namespace EnvManager.Cli.Models.Tasks
                 FileExistsAction :
                 OverwriteAction.Throw;
 
-            CopyFilesHandler.Run(this, arguments, logger);
+            CopyFilesHandler.Run(this, arguments);
         }
 
         public enum OverwriteAction

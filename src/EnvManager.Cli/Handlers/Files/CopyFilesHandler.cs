@@ -1,15 +1,15 @@
-﻿using EnvManager.Cli.Models.Tasks;
+﻿using EnvManager.Cli.Models.Files;
 using EnvManager.Common;
+using ImprovedConsole;
 using ImprovedConsole.CommandRunners.Arguments;
 using System.Text.RegularExpressions;
 
-namespace EnvManager.Cli.Tasks
+namespace EnvManager.Cli.Handlers.Files
 {
     public static class CopyFilesHandler
     {
-        public static void Run(CopyFilesTask setting, CommandArguments arguments, Common.PipeLogger logger)
+        public static void Run(CopyFilesStep setting, CommandArguments arguments)
         {
-            var preview = arguments.Options["-p"] is not null;
             var verbose = arguments.Options["-v"] is not null;
 
             var sourceFolder = setting.SourceFolder
@@ -23,29 +23,36 @@ namespace EnvManager.Cli.Tasks
                 .GetFullPath();
 
             if (!Directory.Exists(sourceFolder))
+            {
+                ConsoleWriter
+                    .WriteLine($"The source folder does not exist ({sourceFolder})")
+                    .WriteLine("Skipping...");
                 return;
+            }
 
-            logger.WriteLine("Copying files.");
-            logger.WriteLine($"Source folder: '{sourceFolder}'");
-            logger.WriteLine($"Target folder: '{targetFolder}'");
-            logger.WriteLine($"Overwrite files: '{setting.FileExistsAction}'");
-            logger.WriteLine($"\nInclude patterns:");
+            ConsoleWriter
+                .WriteLine("Copying files.")
+                .WriteLine($"Source folder: '{sourceFolder}'")
+                .WriteLine($"Target folder: '{targetFolder}'")
+                .WriteLine($"Overwrite files: '{setting.FileExistsAction}'")
+                .WriteLine($"\nInclude patterns:");
+
             foreach (var item in setting.Files)
-                logger.WriteLine($"\t{item}");
+                ConsoleWriter.WriteLine($"\t{item}");
 
-            logger.WriteLine($"\nExclude patterns:");
+            ConsoleWriter.WriteLine($"\nExclude patterns:");
             foreach (var item in setting.IgnoreList)
-                logger.WriteLine($"\t{item}");
+                ConsoleWriter.WriteLine($"\t{item}");
 
             var files = GetFiles(sourceFolder, targetFolder, setting);
 
             if (verbose)
             {
-                logger.Write("\n\n");
+                ConsoleWriter.Write("\n\n");
                 if (files.Any())
-                    logger.WriteLine("Copying the following files:");
+                    ConsoleWriter.WriteLine("Copying the following files:");
                 else
-                    logger.WriteLine("No files matched");
+                    ConsoleWriter.WriteLine("No files matched");
             }
 
             foreach (var file in files)
@@ -54,35 +61,31 @@ namespace EnvManager.Cli.Tasks
                 var targetPath = Path.Combine(targetFolder, file);
                 var fileTargetFolder = Path.GetDirectoryName(targetPath);
 
-
-                if (!preview && !Directory.Exists(fileTargetFolder))
-                    Directory.CreateDirectory(fileTargetFolder);
+                Directory.CreateDirectory(fileTargetFolder);
 
                 if (File.Exists(targetPath))
                 {
-                    if (setting.FileExistsAction is CopyFilesTask.OverwriteAction.Throw)
+                    if (setting.FileExistsAction is CopyFilesStep.OverwriteAction.Throw)
                         throw new IOException($"The file '{targetPath}' already exists");
 
-                    if (setting.FileExistsAction is CopyFilesTask.OverwriteAction.Ignore)
+                    if (setting.FileExistsAction is CopyFilesStep.OverwriteAction.Ignore)
                     {
                         if (verbose)
-                            logger.WriteLine($"File already exists (ignored): '{sourcePath}");
+                            ConsoleWriter.WriteLine($"File already exists (ignored): '{sourcePath}");
                         continue;
                     }
 
-                    if (!preview)
-                        File.SetAttributes(targetPath, FileAttributes.Normal);
+                    File.SetAttributes(targetPath, FileAttributes.Normal);
                 }
 
                 if (verbose)
-                    logger.WriteLine($"Copying file: '{sourcePath}");
+                    ConsoleWriter.WriteLine($"Copying file: '{sourcePath}");
 
-                if (!preview)
-                    File.Copy(sourcePath, targetPath, true);
+                File.Copy(sourcePath, targetPath, true);
             }
         }
 
-        public static List<string> GetFiles(string sourceFolder, string targetFolder, CopyFilesTask setting)
+        public static List<string> GetFiles(string sourceFolder, string targetFolder, CopyFilesStep setting)
         {
             var sourceFiles = GetIncludedFiles(sourceFolder, setting)
                 .Select(file => file.ToRelativePath(sourceFolder))
@@ -114,7 +117,7 @@ namespace EnvManager.Cli.Tasks
             return files;
         }
 
-        private static List<string> GetIncludedFiles(string sourceFolder, CopyFilesTask setting)
+        private static List<string> GetIncludedFiles(string sourceFolder, CopyFilesStep setting)
         {
             List<string> files = [];
             foreach (var file in setting.Files)

@@ -2,8 +2,8 @@
   "Tasks": [
     {
       "name": "CopyFiles",
-      "sourceFolder": "/c/_publish/_prd/study-tools/_cd/",
-      "targetFolder": "~/OneDrive/_backup/_env/apps/study-tools/_cd",
+      "sourceFolder": "./TestFolder/Source",
+      "targetFolder": "./TestFolder/Target",
       "files": [
         "**/*"
       ],

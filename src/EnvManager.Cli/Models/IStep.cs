@@ -3,11 +3,11 @@ using ImprovedConsole.CommandRunners.Arguments;
 
 namespace EnvManager.Cli.Models
 {
-    public interface ITask
+    public interface IStep
     {
         string Code { get; }
         Guid Id { get; set; }
         string Name { get; set; }
-        void Run(CommandArguments arguments, PipeLogger logger);
+        void Run(CommandArguments arguments);
     }
 }

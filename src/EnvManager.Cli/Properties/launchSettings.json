@@ -2,7 +2,10 @@
   "profiles": {
     "EnvManager": {
       "commandName": "Project",
-      "commandLineArgs": "run ./Samples/sample-1.json"
+      //"commandLineArgs": "run -s /c/Users/Bruno/OneDrive/_env/Setup/scripts/common/chocolatey.lua",
+      "commandLineArgs": "run /c/Users/Bruno/OneDrive/_env/Setup/_init.lua",
+      //"commandLineArgs": "run ./Samples/stage.lua",
+      //"commandLineArgs": "run -t ./Samples/steps.lua"
     }
   }
 }

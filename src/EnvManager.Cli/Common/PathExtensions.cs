@@ -24,6 +24,16 @@ namespace EnvManager.Common
             return path;
         }
 
+        public static string GetDirectoryName(this string path)
+        {
+            if (Path.IsPathRooted(path))
+                return Path.GetDirectoryName(path);
+
+            var fullPath = path.GetFullPath();
+            var name = Path.GetDirectoryName(fullPath);
+            return Path.GetRelativePath(".", name);
+        }
+
         public static string GetFullPath(this string path)
         {
             return Path.GetFullPath(path);

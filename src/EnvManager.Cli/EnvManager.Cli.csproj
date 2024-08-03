@@ -6,9 +6,8 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>disable</Nullable>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-		<Version>0.0.6</Version>
+		<Version>0.0.1-dev</Version>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>envm</ToolCommandName>
 		<PackageOutputPath>./nupkg</PackageOutputPath>
@@ -17,6 +16,7 @@
 	<PropertyGroup>
 		<PackageReadmeFile>Readme.md</PackageReadmeFile>
 		<Description>A simple pipeline-like CLI that helps you set up your environment.</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
 		<PackageTags>EnvManager.Cli;Environment;Workstation</PackageTags>
 		<PackageProjectUrl>https://github.com/bh-schmidt/env-manager</PackageProjectUrl>
@@ -36,13 +36,46 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Samples\scripts\step-2.lua" />
+	  <None Remove="Samples\scripts\step-3\init.lua" />
+	  <None Remove="Samples\stage.lua" />
+	  <None Remove="Samples\step-1.lua" />
+	  <None Remove="Samples\tasks.lua" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="Samples\scripts\step-2.lua">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Samples\scripts\step-3\init.lua">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Samples\tasks.lua">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Samples\step-1.lua">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Samples\stage.lua">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="ImprovedConsole" Version="0.0.7" />
+		<PackageReference Include="Mapster" Version="7.4.0" />
+		<PackageReference Include="MoonSharp" Version="2.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="YamlDotNet" Version="16.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <None Include="..\..\Readme.md" Pack="true" PackagePath="\">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="LuaContexts\Models\" />
 	</ItemGroup>
 </Project>
