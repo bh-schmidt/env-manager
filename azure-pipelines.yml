@@ -1,0 +1,23 @@
+name: $(version)-$(BuildId)
+
+trigger: none
+
+variables:
+  - name: version
+    value: '0.0.7'
+    
+resources:
+   repositories:
+   - repository: templates
+     type: git
+     name: Templates/Pipelines.NugetPublisher
+
+pool:
+  vmImage: ubuntu-latest
+
+extends:
+  template: nuget-publisher.yml@templates
+  parameters:
+    environment: push-nuget
+    publishProject: '**/EnvManager.Cli.csproj'
+    version: ${{ variables.version }}
