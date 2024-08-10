@@ -1,10 +1,12 @@
-Steps.files.copy({
+Steps.fs.copy_all({
 	name = "Copy all",
-	source_folder = "./TestFolder/Source",
-	target_folder = "./TestFolder/Target",
-	files = {
-		"**/*"
-	},
-	file_exists_action = "overwrite",
-	ignore_list = {}
+	parameters = {
+		source_folder = "./TestFolder/Source",
+		target_folder = "./TestFolder/Target",
+		files = {
+			"**/*"
+		},
+		ignore_list = {},
+		file_exists_action = "overwrite",
+	}
 })

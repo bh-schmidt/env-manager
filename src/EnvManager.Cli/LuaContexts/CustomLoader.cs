@@ -11,7 +11,7 @@ namespace EnvManager.Cli.LuaContexts
         public CustomLoader(string firstFile)
         {
             baseDir = firstFile
-                .GetDirectoryName()
+                .GetParentDirectory()
                 .GetFullPath();
 
             var scriptsDir = Path.Combine(baseDir, "scripts");

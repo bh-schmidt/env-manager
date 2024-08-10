@@ -1,4 +1,6 @@
-﻿using ImprovedConsole;
+﻿using EnvManager.Cli.Common.Loggers;
+using ImprovedConsole;
+using Serilog;
 
 namespace EnvManager.Cli.Handlers.Chocolatey
 {
@@ -67,15 +69,19 @@ namespace EnvManager.Cli.Handlers.Chocolatey
         {
             int bufferSize = 8 * 1024;
             var buffer = new char[bufferSize];
-            while (true)
-            {
-                var chunkLength = await streamReader.ReadAsync(buffer, 0, buffer.Length);
-                if (chunkLength == 0)
-                {
-                    break;
-                }
 
-                ConsoleWriter.Write(new string(buffer, 0, chunkLength));
+            using (LogCtx.NoLf())
+            {
+                while (true)
+                {
+                    var chunkLength = await streamReader.ReadAsync(buffer, 0, buffer.Length);
+                    if (chunkLength == 0)
+                    {
+                        break;
+                    }
+
+                    Log.Information(new string(buffer, 0, chunkLength));
+                }
             }
         }
     }

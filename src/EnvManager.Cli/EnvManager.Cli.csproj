@@ -40,7 +40,7 @@
 	  <None Remove="Samples\scripts\step-3\init.lua" />
 	  <None Remove="Samples\stage.lua" />
 	  <None Remove="Samples\step-1.lua" />
-	  <None Remove="Samples\tasks.lua" />
+	  <None Remove="Samples\steps.lua" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -50,13 +50,13 @@
 	  <Content Include="Samples\scripts\step-3\init.lua">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>
-	  <Content Include="Samples\tasks.lua">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
 	  <Content Include="Samples\step-1.lua">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="Samples\stage.lua">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Samples\steps.lua">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>
 	</ItemGroup>
@@ -66,6 +66,10 @@
 		<PackageReference Include="Mapster" Version="7.4.0" />
 		<PackageReference Include="MoonSharp" Version="2.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Serilog" Version="4.0.1" />
+		<PackageReference Include="Serilog.Expressions" Version="5.0.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+		<PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
 		<PackageReference Include="YamlDotNet" Version="16.0.0" />
 	</ItemGroup>
 
@@ -73,9 +77,5 @@
 	  <None Include="..\..\Readme.md" Pack="true" PackagePath="\">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="LuaContexts\Models\" />
 	</ItemGroup>
 </Project>

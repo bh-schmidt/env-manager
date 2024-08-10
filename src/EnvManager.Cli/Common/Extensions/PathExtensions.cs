@@ -24,7 +24,18 @@ namespace EnvManager.Common
             return path;
         }
 
-        public static string GetDirectoryName(this string path)
+        public static string CombinePathWith(this string source, string path)
+        {
+            return Path.Combine(source, path);
+        }
+
+
+        public static bool DirectoryExists(this string path)
+        {
+            return Directory.Exists(path);
+        }
+
+        public static string GetParentDirectory(this string path)
         {
             if (Path.IsPathRooted(path))
                 return Path.GetDirectoryName(path);
@@ -32,6 +43,14 @@ namespace EnvManager.Common
             var fullPath = path.GetFullPath();
             var name = Path.GetDirectoryName(fullPath);
             return Path.GetRelativePath(".", name);
+        }
+
+        public static string GetDirectoryName(this string path)
+        {
+            if (path[^1] is '\\' or '/')
+                return Path.GetFileName(Path.GetDirectoryName(path));
+
+            return Path.GetFileName(path);
         }
 
         public static string GetFullPath(this string path)
@@ -46,7 +65,6 @@ namespace EnvManager.Common
                 size++;
 
             return path[size..];
-
         }
 
         public static string[] SplitPath(this string path)

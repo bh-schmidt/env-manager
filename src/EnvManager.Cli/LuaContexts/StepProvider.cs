@@ -1,7 +1,6 @@
 ﻿using EnvManager.Cli.Models;
-using EnvManager.Cli.Models.Chocolatey;
-using EnvManager.Cli.Models.Files;
 using MoonSharp.Interpreter;
+using System.Reflection;
 
 namespace EnvManager.Cli.LuaContexts
 {
@@ -11,15 +10,39 @@ namespace EnvManager.Cli.LuaContexts
 
         public StepProvider()
         {
-            Steps["files"] = new Dictionary<string, object>
-            {
-                ["copy"] = GetFunction<CopyFilesStep>()
-            };
+            var taskType = typeof(ITask);
+            var types = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(e => e.IsClass && taskType.IsAssignableFrom(e));
 
-            Steps["choco"] = new Dictionary<string, object>
+            foreach (var type in types)
             {
-                ["install"] = GetFunction<ChocoInstallStep>()
-            };
+                var instance = (ITask)Activator.CreateInstance(type);
+                var split = instance.Code.Split('.');
+
+                var current = Steps;
+                foreach (var key in split.SkipLast(1))
+                {
+                    if (current.TryGetValue(key, out var obj))
+                    {
+                        if (obj is Dictionary<string, object> dic)
+                        {
+                            current = dic;
+                            continue;
+                        }
+
+                        throw new InvalidCastException($"Can't convert {obj.GetType().FullName} to dictionary.");
+                    }
+
+                    var newDic = new Dictionary<string, object>();
+                    current[key] = newDic;
+                    current = newDic;
+                }
+
+                var method = GetType().GetMethod(nameof(GetFunction), BindingFlags.NonPublic | BindingFlags.Instance);
+                var func = method.MakeGenericMethod(type);
+                var lastKey = split.Last();
+                current[lastKey] = func.Invoke(this, []);
+            }
         }
 
         public Dictionary<string, object> Steps { get; } = [];
@@ -30,19 +53,21 @@ namespace EnvManager.Cli.LuaContexts
         }
 
         private Func<DynValue, string> GetFunction<T>()
-            where T : class, IStep, new()
+            where T : class, ITask, new()
         {
             return (DynValue value) =>
             {
-                var task = DynValueParser.Parse<T>(value);
-
                 if (current is null)
                     throw new Exception("Steps should only be used inside stages.");
 
-                current.AddTask(task);
-                task.Id = Guid.NewGuid();
+                var step = DynValueParser.ParseStep<T>(value);
 
-                return task.Id.ToString();
+                var number = current.Steps.Count + 1;
+                step.Id = $"{current.Id}_STEP_{number:000}";
+
+                current.AddStep(step);
+
+                return step.Id;
             };
         }
     }

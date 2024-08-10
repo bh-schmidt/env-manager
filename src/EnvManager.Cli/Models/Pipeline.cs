@@ -1,41 +1,37 @@
-﻿using EnvManager.Cli.Common;
-using ImprovedConsole;
+﻿using EnvManager.Cli.Common.Loggers;
 using ImprovedConsole.CommandRunners.Arguments;
-using System.Text;
+using Serilog;
 
 namespace EnvManager.Cli.Models
 {
     public class Pipeline(List<Stage> stages)
     {
+        public string Id { get; } = $"{DateTime.Now:yyyy_MM_dd_HH_mm_ss}";
         private readonly List<Stage> stages = stages;
 
         public void Run(CommandArguments commandArguments)
         {
+            var context = new PipelineContext(commandArguments, this);
+            using var _c = LogCtx.SetPipelineLogPath(context.LogFilePath);
+
+            Log.Information(
+$"""
+Starting pipeline
+Id: {Id}
+Log Path: {context.LogFilePath}
+Date: {LogCtx.GetCurrentDate()}
+""");
+
             for (var i = 0; i < stages.Count; i++)
             {
                 var stage = stages[i];
 
-                ConsoleWriter
-                    .WriteLine("------------------------------------------------------------------------------------------------------------------------")
-                    .WriteLine($"Stage started: {stage.Name ?? stage.Id.ToString()}");
+                Log.Information("------------------------------------------------------------------------------------------------------------------------");
 
-                using (CustomLogger.AddPadding(4))
-                {
-                    stage.Run(commandArguments);
-                }
-
-                ConsoleWriter
-                    .WriteLine("\r------------------------------------------------------------------------------------------------------------------------")
-                    .WriteLine();
-
-                if (i != stages.Count - 1)
-                {
-                    ConsoleWriter
-                        .WriteLine()
-                        .WriteLine()
-                        .WriteLine();
-                }
+                stage.Run(context);
             }
+
+            Log.Information("------------------------------------------------------------------------------------------------------------------------");
         }
     }
 }

@@ -7,17 +7,17 @@ namespace EnvManager.Cli.LuaContexts
 {
     public class LuaContext
     {
-        public static Pipeline BuildWithStages(string file)
+        public static Pipeline BuildWithStages(string file, ImprovedConsole.CommandRunners.Arguments.CommandArguments arguments)
         {
-            var stages = GetStages(file);
+            var stages = GetStages(file, arguments);
             return new Pipeline(stages);
         }
 
-        public static Pipeline BuildWithSteps(string file)
+        public static Pipeline BuildWithSteps(string file, ImprovedConsole.CommandRunners.Arguments.CommandArguments arguments)
         {
             var stage = new Stage
             {
-                Id = Guid.NewGuid(),
+                Id = $"STAGE_001",
                 Name = "Default Stage"
             };
 
@@ -27,6 +27,7 @@ namespace EnvManager.Cli.LuaContexts
             var provider = new StepProvider();
             provider.SetCurrentStage(stage);
 
+            script.Globals["Parameters"] = new Parameters(arguments);
             script.Globals["Steps"] = provider.Steps;
             script.Globals["Stage"] = (DynValue value) =>
             {
@@ -39,7 +40,7 @@ namespace EnvManager.Cli.LuaContexts
             return new Pipeline([stage]);
         }
 
-        private static List<Stage> GetStages(string file)
+        private static List<Stage> GetStages(string file, ImprovedConsole.CommandRunners.Arguments.CommandArguments arguments)
         {
             bool stagesMapped = false;
             var stages = new List<Stage>();
@@ -48,15 +49,17 @@ namespace EnvManager.Cli.LuaContexts
             var script = new Script();
             script.Options.ScriptLoader = new CustomLoader(file);
 
+            script.Globals["Parameters"] = new Parameters(arguments);
             script.Globals["Stage"] = (DynValue value) =>
             {
                 var dto = DynValueParser.Parse<Stage>(value);
                 if (stagesMapped)
                     throw new Exception("Can't create an stage inside another stage.");
 
-                dto.Id = Guid.NewGuid();
+                var number = stages.Count + 1;
+                dto.Id = $"STAGE_{number:000}";
                 stages.Add(dto);
-                return dto.Id.ToString();
+                return dto.Id;
             };
 
             var provider = new StepProvider();

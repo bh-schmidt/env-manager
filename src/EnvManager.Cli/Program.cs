@@ -1,4 +1,4 @@
-﻿using EnvManager.Cli.Common;
+﻿using EnvManager.Cli.Common.Loggers;
 using EnvManager.Cli.LuaContexts;
 using EnvManager.Common;
 using ImprovedConsole;
@@ -8,7 +8,7 @@ using ImprovedConsole.CommandRunners.Commands;
 using MoonSharp.Interpreter;
 using System.Reflection;
 
-ConsoleWriter.Instance = new CustomLogger();
+SetupLogger.Setup();
 
 UserData.RegisterAssembly(Assembly.GetCallingAssembly());
 
@@ -25,6 +25,7 @@ builder.AddCommand(run =>
         .AddParameter("file", "The lua file containing the pipeline")
         .AddFlag("-s", "Runs the pipeline without using stages")
         .AddFlag("-v", "Enables the verbose mode for logs")
+        .AddFlag("--test", "Setup the test environment")
         .SetHandler(Run);
 });
 
@@ -50,23 +51,24 @@ static void Run(CommandArguments arguments)
             .FixWindowsDisk();
 
         var pipeline = runSteps ?
-            LuaContext.BuildWithSteps(path) :
-            LuaContext.BuildWithStages(path);
+            LuaContext.BuildWithSteps(path, arguments) :
+            LuaContext.BuildWithStages(path, arguments);
 
         pipeline.Run(arguments);
     }
     catch (ScriptRuntimeException ex)
     {
-        var message = verbose ? 
-            ex.DecoratedMessage + '\n' + ex.StackTrace :
-            ex.DecoratedMessage;
+        var message = ex.DecoratedMessage ?? ex.Message;
+        var treatedMessage = verbose ?
+            message + '\n' + ex.StackTrace :
+            message;
 
         ConsoleWriter.WriteLine("An error ocurred.");
-        ConsoleWriter.WriteLine(message);
+        ConsoleWriter.WriteLine(treatedMessage);
     }
     catch (Exception ex)
     {
-        var message = verbose ? 
+        var message = verbose ?
             ex.Message + '\n' + ex.StackTrace :
             ex.Message;
 

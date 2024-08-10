@@ -1,7 +1,9 @@
 ﻿using EnvManager.Cli.Common;
+using EnvManager.Cli.Common.Loggers;
 using ImprovedConsole;
 using ImprovedConsole.CommandRunners.Arguments;
 using MoonSharp.Interpreter;
+using Serilog;
 using System.Text;
 
 namespace EnvManager.Cli.Models
@@ -9,32 +11,40 @@ namespace EnvManager.Cli.Models
     [MoonSharpUserData]
     public class Stage
     {
-        public Guid Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; }
         public Closure Body { get; set; }
-        public List<IStep> Steps { get; } = [];
+        public List<Step> Steps { get; } = [];
 
-        public void Run(CommandArguments commandArguments)
+        public void Run(PipelineContext pipelineContext)
         {
-            for (int i = 0; i < Steps.Count; i++)
+            var stageContext = new StageContext(pipelineContext, this);
+            Log.Information(
+$"""
+Stage started
+Id = {Id}
+Name = {Name}
+Log Dir = {stageContext.LogDirectory}
+Date: {LogCtx.GetCurrentDate()}
+""");
+
+            using (LogCtx.AddPadding(4))
             {
-                var task = Steps[i];
-
-                ConsoleWriter.WriteLine($"Task started: {task.Name ?? task.Id.ToString()}");
-
-                using (CustomLogger.AddPadding(4))
+                for (int i = 0; i < Steps.Count; i++)
                 {
-                    task.Run(commandArguments);
-                }
+                    var step = Steps[i];
 
-                if (i != Steps.Count - 1)
-                    ConsoleWriter.WriteLine().WriteLine();
+                    step.Run(stageContext);
+
+                    if (i != Steps.Count - 1)
+                        Log.Information("\n");
+                }
             }
         }
 
-        public void AddTask(IStep task)
+        public void AddStep(Step step)
         {
-            Steps.Add(task);
+            Steps.Add(step);
         }
     }
 }

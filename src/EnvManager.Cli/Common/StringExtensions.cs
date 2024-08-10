@@ -6,6 +6,9 @@ namespace EnvManager.Cli.Common
     {
         public static string PadLinesLeft(this string source, int padSize)
         {
+            if(padSize == 0)
+                return source;
+
             var x1 = "\r" + new string(' ', padSize);
             var x2 = "\n" + new string(' ', padSize);
 

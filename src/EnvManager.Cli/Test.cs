@@ -1,35 +1,35 @@
-﻿using EnvManager.Cli.Common;
-using ImprovedConsole;
+﻿using EnvManager.Cli.Common.Loggers;
+using Serilog;
+using Serilog.Context;
 
 namespace EnvManager.Cli
 {
     public class Test
     {
-        public async Task A()
+        public static void Run()
         {
-            await Task.CompletedTask;
-            //CustomLogger._padding = 2;
-            using var _ = CustomLogger.AddPadding(2);
-            ConsoleWriter.WriteLine("a");
-            B();
-            ConsoleWriter.WriteLine("a");
-        }
+            using (LoggerPadding.AddPadding(4))
+            {
+                Log.ForContext("log_padding", "    ")
+                    .ForContext(LogCtx.NoLF)
+                    .Information("asdfasdfasdf");
 
-        public void B()
-        {
-            ConsoleWriter.WriteLine("b");
-            using var x = CustomLogger.AddPadding(2);
-            ConsoleWriter.WriteLine("b");
-            C().Wait();
-            ConsoleWriter.WriteLine("b");
-        }
+                Log.ForContext("log_padding", "    ")
+                    .Information("\rasaaaaaaa");
 
-        public async Task C()
-        {
-            using var x = CustomLogger.AddPadding(2);
-            ConsoleWriter.WriteLine("c");
-            await Task.Delay(1000);
-            ConsoleWriter.WriteLine("c");
-        } 
+                using (LoggerPadding.AddPadding(4))
+                {
+                    Log.Logger.Information("aaaa");
+                }
+
+                Log.Logger.Information("aaaa");
+            }
+
+            using(LogContext.PushProperty("var", "teste_asd"))
+            using(LogContext.PushProperty("file-only", null))
+            {
+                Log.Logger.Information("aaaab");
+            }
+        }
     }
 }

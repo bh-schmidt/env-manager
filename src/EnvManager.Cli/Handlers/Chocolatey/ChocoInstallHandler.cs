@@ -1,6 +1,6 @@
-﻿using EnvManager.Cli.Common;
+﻿using EnvManager.Cli.Common.Loggers;
 using EnvManager.Cli.Models.Chocolatey;
-using ImprovedConsole;
+using Serilog;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
@@ -17,9 +17,9 @@ namespace EnvManager.Cli.Handlers.Chocolatey
             {
                 var package = step.Packages[i];
 
-                ConsoleWriter.WriteLine($"Installing package {package}");
+                Log.Information($"Installing package {package}");
 
-                using (CustomLogger.AddPadding(4))
+                using (LoggerPadding.AddPadding(4))
                 {
                     Install(package, step.IgnoreErrors);
                 }

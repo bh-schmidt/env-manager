@@ -1,12 +1,10 @@
-﻿using EnvManager.Cli.Common;
-using EnvManager.Cli.Handlers.Chocolatey;
-using ImprovedConsole.CommandRunners.Arguments;
+﻿using EnvManager.Cli.Handlers.Chocolatey;
 
 namespace EnvManager.Cli.Models.Chocolatey
 {
-    public class ChocoInstallStep : IStep
+    public class ChocoInstallStep : ITask
     {
-        public string Code => "install";
+        public string Code => "choco.install";
 
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -14,7 +12,7 @@ namespace EnvManager.Cli.Models.Chocolatey
         public List<string> Packages { get; set; }
         public bool IgnoreErrors { get; set; } = true;
 
-        public void Run(CommandArguments arguments)
+        public void Run(StepContext context)
         {
             ChocoInstallHandler.Run(this);
         }

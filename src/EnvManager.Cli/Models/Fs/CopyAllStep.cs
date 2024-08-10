@@ -1,14 +1,10 @@
-﻿using EnvManager.Cli.Common;
-using EnvManager.Cli.Handlers.Files;
-using ImprovedConsole.CommandRunners.Arguments;
+﻿using EnvManager.Cli.Handlers.Fs;
 
-namespace EnvManager.Cli.Models.Files
+namespace EnvManager.Cli.Models.Fs
 {
-    public class CopyFilesStep : IStep
+    public class CopyAllStep : ITask
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string Code { get; } = "CopyFiles";
+        public string Code { get; } = "fs.copy_all";
 
         public string SourceFolder { get; set; }
         public string TargetFolder { get; set; }
@@ -16,7 +12,7 @@ namespace EnvManager.Cli.Models.Files
         public IEnumerable<string> IgnoreList { get; set; }
         public OverwriteAction FileExistsAction { get; set; }
 
-        public void Run(CommandArguments arguments)
+        public void Run(StepContext context)
         {
             if (Files is null || !Files.Any())
                 Files = ["**/*"];
@@ -32,7 +28,7 @@ namespace EnvManager.Cli.Models.Files
                 FileExistsAction :
                 OverwriteAction.Throw;
 
-            CopyFilesHandler.Run(this, arguments);
+            CopyAllHandler.Run(this, context);
         }
 
         public enum OverwriteAction
