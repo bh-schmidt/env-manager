@@ -23,6 +23,11 @@ namespace EnvManager.Cli.Common.Loggers
             return LogContext.Push(NoLF);
         }
 
+        internal static IDisposable SetStepFileOnly()
+        {
+            return LogContext.Push(StepFileOnly);
+        }
+
         internal static IDisposable AddPadding(int padding)
         {
             return LoggerPadding.AddPadding(padding);

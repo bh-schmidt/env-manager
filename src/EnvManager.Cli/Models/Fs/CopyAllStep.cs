@@ -1,4 +1,4 @@
-﻿using EnvManager.Cli.Handlers.Fs;
+﻿using EnvManager.Cli.Models.Fs.Handlers;
 
 namespace EnvManager.Cli.Models.Fs
 {

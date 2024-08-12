@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using Serilog;
 using Serilog.Context;
 
-namespace EnvManager.Cli.Handlers.Fs
+namespace EnvManager.Cli.Models.Fs.Handlers
 {
     public static class CopyAllHandler
     {
@@ -43,7 +43,7 @@ Include patterns: {filesJson}
 Exclude patterns: {ignoreJson}
 """);
 
-            var files = FileMatcher.GetFiles(sourceFolder, setting.Files, setting.IgnoreList);
+            var files = StaticFileMatcher.GetFiles(sourceFolder, setting.Files, setting.IgnoreList);
 
             using (LogContext.Push(LogCtx.StepFileOnly))
             {

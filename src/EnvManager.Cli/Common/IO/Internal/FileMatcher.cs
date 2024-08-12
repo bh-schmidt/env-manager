@@ -5,17 +5,18 @@ namespace EnvManager.Cli.Common.IO.Internal
 {
     public class FileMatcher
     {
-        public static List<FileMatch> GetFiles(string source, IEnumerable<string> patterns, IEnumerable<string> ignorePatterns)
-        {
-            var sourceFiles = GetIncludedFiles(source, patterns)
-                .Select(file => file.ToRelativePath(source))
-                .Distinct()
-                .ToArray();
+        private readonly string sourceDir;
+        private readonly IEnumerable<string> patterns;
+        private readonly Regex[] ignoreFiles;
 
-            var ignoreFiles = ignorePatterns
-                .Select(file => Path.Combine(source, file))
+        public FileMatcher(string sourceDir, IEnumerable<string> patterns, IEnumerable<string> ignorePatterns)
+        {
+            this.sourceDir = sourceDir;
+            this.patterns = patterns;
+            ignoreFiles = ignorePatterns
+                .Select(file => Path.Combine(sourceDir, file))
                 .Select(Path.GetFullPath)
-                .Select(file => file.ToRelativePath(source))
+                .Select(file => file.ToRelativePath(sourceDir))
                 .Distinct()
                 .Select(file =>
                 {
@@ -23,64 +24,70 @@ namespace EnvManager.Cli.Common.IO.Internal
                     return new Regex(regex, RegexOptions.RightToLeft);
                 })
                 .ToArray();
-
-            List<FileMatch> files = [];
-
-            foreach (var file in sourceFiles)
-            {
-                if (ignoreFiles.Any(e => e.IsMatch(file)))
-                {
-                    files.Add(new FileMatch(file, false));
-                    continue;
-                }
-
-                files.Add(new FileMatch(file));
-            }
-
-            return files;
         }
 
-        private static List<string> GetIncludedFiles(string sourceFolder, IEnumerable<string> patterns)
+        public List<FileSystemMatch> Matches { get; } = [];
+        public HashSet<string> HandledPaths { get; } = [];
+
+        public void Match()
         {
-            List<string> files = [];
             foreach (var file in patterns)
             {
                 var matcher = new PathMatcher
                 {
                     Pattern = file,
-                    SourceFolder = sourceFolder,
+                    SourceFolder = sourceDir,
                     Parts = Path
-                         .Combine(sourceFolder, file)
+                         .Combine(sourceDir, file)
                          .GetFullPath()
-                         .ToRelativePath(sourceFolder)
+                         .ToRelativePath(sourceDir)
                          .SplitPath()
                 };
 
-                var foundFiles = HandleMatcher(sourceFolder, matcher);
-                files.AddRange(foundFiles);
+                Search(sourceDir, matcher);
             }
-
-            return files;
         }
 
-        private static IEnumerable<string> HandleMatcher(string currentDir, PathMatcher matcher)
+        private void Add(IEnumerable<string> paths, bool isDirectory)
+        {
+            foreach (var path in paths)
+            {
+                if (HandledPaths.Contains(path))
+                    continue;
+
+                HandledPaths.Add(path);
+
+                if (ignoreFiles.Any(e => e.IsMatch(path)))
+                {
+                    Matches.Add(new()
+                    {
+                        IsDirectory = isDirectory,
+                        Path = path,
+                        Excluded = true
+                    });
+                    continue;
+                }
+
+                Matches.Add(new()
+                {
+                    IsDirectory = isDirectory,
+                    Path = path,
+                    Excluded = false
+                });
+            }
+        }
+
+        private void Search(string currentDir, PathMatcher matcher)
         {
             if (matcher.Parts.IsEmpty)
-                return [];
+                return;
 
             var currentPart = matcher.Parts[0];
-
-            if (matcher.Parts.Length == 1)
-            {
-                var foundFiles = Directory.GetFiles(currentDir, currentPart);
-                return foundFiles;
-            }
-
-            List<string> files = [];
 
             if (currentPart == "**")
             {
                 var dirs = Directory.GetDirectories(currentDir);
+                Add(dirs, true);
 
                 PathMatcher newMatcher = new()
                 {
@@ -89,22 +96,30 @@ namespace EnvManager.Cli.Common.IO.Internal
                     Parts = matcher.Parts[1..]
                 };
 
-                var found1 = HandleMatcher(currentDir, newMatcher);
-                files.AddRange(found1);
+                Search(currentDir, newMatcher);
 
                 foreach (var dir in dirs)
                 {
-                    var found2 = HandleMatcher(dir, newMatcher);
-                    var found3 = HandleMatcher(dir, matcher);
-
-                    files.AddRange(found2);
-                    files.AddRange(found3);
+                    Search(dir, newMatcher);
+                    Search(dir, matcher);
                 }
 
-                return files;
+                return;
+            }
+
+            if (matcher.Parts.Length == 1)
+            {
+                var foundDirs = Directory.GetDirectories(currentDir, currentPart);
+                Add(foundDirs, true);
+
+                var foundFiles = Directory.GetFiles(currentDir, currentPart);
+                Add(foundFiles, false);
+                return;
             }
 
             var directories = Directory.GetDirectories(currentDir, currentPart);
+            Add(directories, true);
+
             foreach (var directory in directories)
             {
                 PathMatcher newMatcher = new()
@@ -113,11 +128,8 @@ namespace EnvManager.Cli.Common.IO.Internal
                     SourceFolder = matcher.SourceFolder,
                     Parts = matcher.Parts[1..]
                 };
-                var foundFiles = HandleMatcher(directory, newMatcher);
-                files.AddRange(foundFiles);
+                Search(directory, newMatcher);
             }
-
-            return files;
         }
 
         ref struct PathMatcher

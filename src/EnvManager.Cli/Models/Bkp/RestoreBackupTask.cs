@@ -1,4 +1,5 @@
 ﻿using EnvManager.Cli.Common.IO;
+using EnvManager.Cli.Enums;
 using EnvManager.Common;
 using Serilog;
 
@@ -10,6 +11,8 @@ namespace EnvManager.Cli.Models.Bkp
 
         public string Source { get; set; }
         public string Target { get; set; }
+        public DirectoryExistsAction DirExists { get; set; }
+        public FileExistsAction FileExists { get; set; }
 
         public void Run(StepContext context)
         {
@@ -43,8 +46,16 @@ Target: {Target}
 
             if (Target.DirectoryExists())
             {
-                Log.Information("The target directory already exists. Skipping...");
-                return;
+                if (DirExists == DirectoryExistsAction.Throw)
+                    throw new Exception("The target directory already exists.");
+
+                if (DirExists == DirectoryExistsAction.Ignore)
+                {
+                    Log.Information("The target directory already exists. Skipping...");
+                    return;
+                }
+
+                Log.Information("The target directory already exists.");
             }
 
             var latest = Directory.GetDirectories(Source)
@@ -61,7 +72,8 @@ Target: {Target}
 
             Log.Information($"Restoring the backup ({sourceDir}) to target directory ({Target})");
 
-            DirHelper.Copy(sourceDir, Target);
+            var replaceFiles = FileExists == FileExistsAction.Replace;
+            DirHelper.CopyAsync(sourceDir, Target, replaceFiles).Wait();
 
             Log.Information($"Backup restored.");
         }

@@ -31,7 +31,7 @@ Exclude patterns: {ignoreJson}
 
             Log.Information($"Backup started");
 
-            var files = FileMatcher.GetFiles(task.Source, task.IncludePatterns, task.ExcludePatterns);
+            var files = StaticFileMatcher.GetFiles(task.Source, task.IncludePatterns, task.ExcludePatterns);
 
             if (files.All(e => !e.Matched))
             {
@@ -53,7 +53,7 @@ Exclude patterns: {ignoreJson}
 
             var name = task.Source.GetDirectoryName();
             var targetDir = task.Target
-                .CombinePathWith($"{DateTime.Now:yyyy_MM_dd_hh_mm_ss}");
+                .CombinePathWith($"{DateTime.Now:yyyy_MM_dd_HH_mm_ss}");
 
             foreach (var file in files.Where(e => e.Matched))
             {

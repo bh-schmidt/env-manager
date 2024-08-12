@@ -12,8 +12,6 @@ namespace EnvManager.Cli.Models.Fs
 
         public void Run(StepContext context)
         {
-            var verbose = context.Arguments.Options.Contains("-v");
-
             ArgumentException.ThrowIfNullOrWhiteSpace(Source);
             ArgumentException.ThrowIfNullOrWhiteSpace(Target);
 
@@ -58,10 +56,7 @@ Target: '{Target}'
             {
                 Log.Information("\nCopy started.");
 
-                if (verbose)
-                    DirHelper.Copy(Source, Target, true, true);
-                else
-                    DirHelper.Copy(Source, Target);
+                DirHelper.CopyAsync(Source, Target).Wait();
 
                 Log.Information("Copy finished.");
             }

@@ -2,7 +2,7 @@
 using ImprovedConsole;
 using Serilog;
 
-namespace EnvManager.Cli.Handlers.Chocolatey
+namespace EnvManager.Cli.Models.Choco.Handlers
 {
     public class CliEventLogger
     {
@@ -70,6 +70,7 @@ namespace EnvManager.Cli.Handlers.Chocolatey
             int bufferSize = 8 * 1024;
             var buffer = new char[bufferSize];
 
+            using (LogCtx.SetStepFileOnly())
             using (LogCtx.NoLf())
             {
                 while (true)

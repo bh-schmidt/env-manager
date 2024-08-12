@@ -1,11 +1,10 @@
 ﻿using EnvManager.Cli.Common.Loggers;
-using EnvManager.Cli.Models.Chocolatey;
 using Serilog;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 
-namespace EnvManager.Cli.Handlers.Chocolatey
+namespace EnvManager.Cli.Models.Choco.Handlers
 {
     public class ChocoInstallHandler
     {
@@ -17,12 +16,7 @@ namespace EnvManager.Cli.Handlers.Chocolatey
             {
                 var package = step.Packages[i];
 
-                Log.Information($"Installing package {package}");
-
-                using (LoggerPadding.AddPadding(4))
-                {
-                    Install(package, step.IgnoreErrors);
-                }
+                Install(package, step.IgnoreErrors);
             }
         }
 
@@ -38,6 +32,8 @@ namespace EnvManager.Cli.Handlers.Chocolatey
                 if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
                     throw new Exception("Admin privileges are required to install chocolatey packages.");
             }
+
+            Log.Information($"Installing '{package}'...");
 
             ProcessStartInfo startInfo = new()
             {
@@ -60,8 +56,21 @@ namespace EnvManager.Cli.Handlers.Chocolatey
 
             _eventLogger.Finish();
 
-            if (!ignoreErrors && proc.ExitCode != 0)
+            if (proc.ExitCode == 0)
+            {
+                Log.Information($"Installation complete.");
+            }
+            else
+            {
+                if (ignoreErrors)
+                {
+                    Log.Information($"An error ocurred during the installation.");
+                    return;
+                }
+
                 throw new Exception($"An error ocurred installing the package. Status code: {proc.ExitCode}.");
+            }
+
         }
     }
 }
