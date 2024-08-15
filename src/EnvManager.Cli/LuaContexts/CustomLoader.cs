@@ -18,15 +18,29 @@ namespace EnvManager.Cli.LuaContexts
 
             ModulePaths = [
                 Path.Combine(baseDir, "?.lua"),
-                Path.Combine(scriptsDir, "?.lua"),
-                Path.Combine(scriptsDir, "?/init.lua"),
-                Path.Combine(scriptsDir, "?/_init.lua"),
+                Path.Combine(baseDir, "?/init.lua"),
+                Path.Combine(baseDir, "?/_init.lua"),
             ];
         }
 
         public override object LoadFile(string file, Table globalContext)
         {
-            return File.ReadAllBytes(file);
+            var lines = GetText(file);
+            return string.Join('\n', lines);
+        }
+
+        private IEnumerable<string> GetText(string file)
+        {
+            var threatedFile = file.Replace("\\", "/");
+            var lines = File.ReadAllLines(file);
+
+            yield return $"__set_current_file('{threatedFile}')";
+            foreach (var line in lines)
+            {
+                yield return line;
+                if (line.Trim().StartsWith("require"))
+                    yield return $"__set_current_file('{threatedFile}')";
+            }
         }
 
         public override string ResolveFileName(string filename, Table globalContext)

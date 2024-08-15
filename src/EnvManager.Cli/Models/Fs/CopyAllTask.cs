@@ -2,12 +2,12 @@
 
 namespace EnvManager.Cli.Models.Fs
 {
-    public class CopyAllStep : ITask
+    public class CopyAllTask : ITask
     {
         public string Code { get; } = "fs.copy_all";
 
-        public string SourceFolder { get; set; }
-        public string TargetFolder { get; set; }
+        public string Source { get; set; }
+        public string Target { get; set; }
         public IEnumerable<string> Files { get; set; }
         public IEnumerable<string> IgnoreList { get; set; }
         public OverwriteAction FileExistsAction { get; set; }
@@ -17,11 +17,11 @@ namespace EnvManager.Cli.Models.Fs
             if (Files is null || !Files.Any())
                 Files = ["**/*"];
 
-            if (SourceFolder[^1] is not '/' or '\\')
-                SourceFolder += '/';
+            if (Source[^1] is not '/' or '\\')
+                Source += '/';
 
-            if (TargetFolder[^1] is not '/' or '\\')
-                TargetFolder += '/';
+            if (Target[^1] is not '/' or '\\')
+                Target += '/';
 
             IgnoreList ??= [];
             FileExistsAction = Enum.IsDefined(FileExistsAction) ?

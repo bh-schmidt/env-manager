@@ -1,4 +1,5 @@
-﻿using EnvManager.Cli.Common.Loggers;
+﻿using EnvManager.Cli.Common.EventLoggers;
+using EnvManager.Cli.Common.Loggers;
 using Serilog;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -8,7 +9,7 @@ namespace EnvManager.Cli.Models.Choco.Handlers
 {
     public class ChocoInstallHandler
     {
-        private static readonly CliEventLogger _eventLogger = new();
+        private static readonly ChocoEventLogger _eventLogger = new();
 
         public static void Run(ChocoInstallStep step)
         {
@@ -59,18 +60,16 @@ namespace EnvManager.Cli.Models.Choco.Handlers
             if (proc.ExitCode == 0)
             {
                 Log.Information($"Installation complete.");
+                return;
             }
-            else
+
+            if (ignoreErrors)
             {
-                if (ignoreErrors)
-                {
-                    Log.Information($"An error ocurred during the installation.");
-                    return;
-                }
-
-                throw new Exception($"An error ocurred installing the package. Status code: {proc.ExitCode}.");
+                Log.Information($"An error ocurred during the installation.");
+                return;
             }
 
+            throw new Exception($"An error ocurred installing the package. Status code: {proc.ExitCode}.");
         }
     }
 }

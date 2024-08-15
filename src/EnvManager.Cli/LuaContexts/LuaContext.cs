@@ -29,6 +29,11 @@ namespace EnvManager.Cli.LuaContexts
 
             script.Globals["Parameters"] = new Parameters(arguments);
             script.Globals["Steps"] = provider.Steps;
+            script.Globals["__set_current_file"] = (string file) =>
+            {
+                provider.SetCurrentFile(file);
+            };
+
             script.Globals["Stage"] = (DynValue value) =>
             {
                 throw new Exception("Can't create an stage inside another stage.");
@@ -64,6 +69,10 @@ namespace EnvManager.Cli.LuaContexts
 
             var provider = new StepProvider();
             script.Globals["Steps"] = provider.Steps;
+            script.Globals["__set_current_file"] = (string file) =>
+            {
+                provider.SetCurrentFile(file);
+            };
 
             var fileName = Path.GetFileName(file);
             script.DoFile(fileName);

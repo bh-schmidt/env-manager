@@ -51,7 +51,6 @@ Exclude patterns: {ignoreJson}
         {
             Log.Information("\nMatched files:");
 
-            var name = task.Source.GetDirectoryName();
             var targetDir = task.Target
                 .CombinePathWith($"{DateTime.Now:yyyy_MM_dd_HH_mm_ss}");
 

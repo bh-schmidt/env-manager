@@ -1,20 +1,19 @@
 ﻿using EnvManager.Cli.Common.Loggers;
-using ImprovedConsole;
 using Serilog;
 
-namespace EnvManager.Cli.Models.Choco.Handlers
+namespace EnvManager.Cli.Common.EventLoggers
 {
-    public class CliEventLogger
+    public class CommonEventLogger
     {
         private readonly Queue<StreamReader> _streams = [];
         private bool finished;
         private TaskCompletionSource completionSource;
 
-        public CliEventLogger()
+        public CommonEventLogger()
         {
         }
 
-        public CliEventLogger(StreamReader streamReader)
+        public CommonEventLogger(StreamReader streamReader)
         {
             _streams.Enqueue(streamReader);
 
@@ -45,18 +44,14 @@ namespace EnvManager.Cli.Models.Choco.Handlers
         {
             while (true)
             {
-                if (finished)
-                {
-                    completionSource.SetResult();
-                    return;
-                }
-
-                await Task.Delay(1000);
                 StreamReader streamReader;
                 lock (_streams)
                 {
                     if (_streams.Count == 0)
-                        continue;
+                    {
+                        completionSource.SetResult();
+                        return;
+                    }
 
                     streamReader = _streams.Dequeue();
                 }
@@ -65,7 +60,7 @@ namespace EnvManager.Cli.Models.Choco.Handlers
             }
         }
 
-        private static async Task Run(StreamReader streamReader)
+        private async Task Run(StreamReader streamReader)
         {
             int bufferSize = 8 * 1024;
             var buffer = new char[bufferSize];
@@ -76,7 +71,7 @@ namespace EnvManager.Cli.Models.Choco.Handlers
                 while (true)
                 {
                     var chunkLength = await streamReader.ReadAsync(buffer, 0, buffer.Length);
-                    if (chunkLength == 0)
+                    if (chunkLength == 0 && finished)
                     {
                         break;
                     }

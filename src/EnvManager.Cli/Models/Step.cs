@@ -1,5 +1,6 @@
 ﻿using EnvManager.Cli.Common;
 using EnvManager.Cli.Common.Loggers;
+using EnvManager.Common;
 using ImprovedConsole;
 using MoonSharp.Interpreter;
 using Serilog;
@@ -13,7 +14,8 @@ namespace EnvManager.Cli.Models
         public string Name { get; set; }
         public bool IgnoreErrors { get; set; }
         public DynValue Parameters { get; set; }
-
+        public string File { get; internal set; }
+        public string Direrctory => File.GetParentDirectory();
         internal ITask Task { get; set; }
 
         public void Run(StageContext stageContext)

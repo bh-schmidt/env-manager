@@ -1,12 +1,16 @@
 ﻿using EnvManager.Cli.Models;
+using EnvManager.Common;
 using MoonSharp.Interpreter;
+using MoonSharp.Interpreter.CoreLib;
+using MoonSharp.Interpreter.Debugging;
 using System.Reflection;
 
 namespace EnvManager.Cli.LuaContexts
 {
     public class StepProvider
     {
-        private Stage current;
+        private Stage currentStage;
+        private string currentFile;
 
         public StepProvider()
         {
@@ -49,7 +53,12 @@ namespace EnvManager.Cli.LuaContexts
 
         public void SetCurrentStage(Stage stage)
         {
-            current = stage;
+            currentStage = stage;
+        }
+
+        public void SetCurrentFile(string file)
+        {
+            currentFile = file;
         }
 
         private Func<DynValue, string> GetFunction<T>()
@@ -57,15 +66,16 @@ namespace EnvManager.Cli.LuaContexts
         {
             return (DynValue value) =>
             {
-                if (current is null)
+                if (currentStage is null)
                     throw new Exception("Steps should only be used inside stages.");
 
                 var step = DynValueParser.ParseStep<T>(value);
+                step.File = currentFile.GetFullPath();
 
-                var number = current.Steps.Count + 1;
-                step.Id = $"{current.Id}_STEP_{number:000}";
+                var number = currentStage.Steps.Count + 1;
+                step.Id = $"{currentStage.Id}_STEP_{number:000}";
 
-                current.AddStep(step);
+                currentStage.AddStep(step);
 
                 return step.Id;
             };

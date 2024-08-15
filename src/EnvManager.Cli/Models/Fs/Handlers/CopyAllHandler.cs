@@ -11,14 +11,14 @@ namespace EnvManager.Cli.Models.Fs.Handlers
 {
     public static class CopyAllHandler
     {
-        public static void Run(CopyAllStep setting, StepContext context)
+        public static void Run(CopyAllTask setting, StepContext context)
         {
-            var sourceFolder = setting.SourceFolder
+            var sourceFolder = setting.Source
                 .FixWindowsDisk()
                 .FixUserPath()
                 .GetFullPath();
 
-            var targetFolder = setting.TargetFolder
+            var targetFolder = setting.Target
                 .FixWindowsDisk()
                 .FixUserPath()
                 .GetFullPath();
@@ -51,7 +51,7 @@ Exclude patterns: {ignoreJson}
             }
         }
 
-        private static void LogStepFile(CopyAllStep setting, string sourceFolder, string targetFolder, List<FileMatch> files)
+        private static void LogStepFile(CopyAllTask setting, string sourceFolder, string targetFolder, List<FileMatch> files)
         {
             Log.Information("\nMatched files:");
 
@@ -65,10 +65,10 @@ Exclude patterns: {ignoreJson}
 
                 if (File.Exists(targetPath))
                 {
-                    if (setting.FileExistsAction is CopyAllStep.OverwriteAction.Throw)
+                    if (setting.FileExistsAction is CopyAllTask.OverwriteAction.Throw)
                         throw new IOException($"The file '{targetPath}' already exists");
 
-                    if (setting.FileExistsAction is CopyAllStep.OverwriteAction.Ignore)
+                    if (setting.FileExistsAction is CopyAllTask.OverwriteAction.Ignore)
                     {
                         Log.Information($"File not copied because it already exists. Source='{sourcePath}' Target='{targetPath}'");
                         continue;
