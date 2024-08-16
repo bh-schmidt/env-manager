@@ -1,10 +1,12 @@
 ﻿using EnvManager.Cli.Common;
 using EnvManager.Cli.Common.Loggers;
+using EnvManager.Cli.Common.Windows;
 using EnvManager.Common;
 using ImprovedConsole;
 using MoonSharp.Interpreter;
 using Serilog;
 using Serilog.Context;
+using System.Runtime.InteropServices;
 
 namespace EnvManager.Cli.Models
 {
@@ -20,6 +22,9 @@ namespace EnvManager.Cli.Models
 
         public void Run(StageContext stageContext)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                WindowsRefresher.Refresh();
+
             var stepContext = new StepContext(stageContext, this);
             var verbose = stageContext.Arguments.Options.Contains("-v");
 

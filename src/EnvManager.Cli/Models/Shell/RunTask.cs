@@ -23,7 +23,7 @@ namespace EnvManager.Cli.Models.Shell
                 var path = Environment.GetEnvironmentVariable("PATH");
                 var bashPath = "C:\\Program Files\\Git\\bin";
 
-                if (!path.ToLower().Contains(bashPath.ToLower()))
+                if (!path.Contains(bashPath, StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (path.EndsWith(';'))
                         Environment.SetEnvironmentVariable("PATH", $"{path}{bashPath};", EnvironmentVariableTarget.Process);

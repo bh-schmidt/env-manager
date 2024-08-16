@@ -1,10 +1,12 @@
 ﻿using EnvManager.Cli.Common.Loggers;
+using EnvManager.Cli.Common.Windows;
 using EnvManager.Cli.LuaContexts;
 using EnvManager.Common;
 using ImprovedConsole;
 using ImprovedConsole.CommandRunners;
 using ImprovedConsole.CommandRunners.Arguments;
 using ImprovedConsole.CommandRunners.Commands;
+using Microsoft.Win32;
 using MoonSharp.Interpreter;
 using System.Reflection;
 
