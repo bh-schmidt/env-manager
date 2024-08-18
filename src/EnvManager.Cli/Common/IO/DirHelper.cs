@@ -5,17 +5,19 @@ namespace EnvManager.Cli.Common.IO
 {
     public class DirHelper
     {
-        //public static async Task CopyAsync(string sourceDir, string destinationDir, int maxConcurrency = 1, CancellationToken cancellationToken = default)
-        //{
-        //    var filter = new FileMatcherFilters { SourceDir = sourceDir };
-        //    var matcher = new FileMatcher(filter)
-        //    {
-        //        MaxConcurrency = maxConcurrency
-        //    };
-        //    matcher.Match();
-
-        //    await CopyAsync(matcher.Matches, sourceDir, destinationDir, true, cancellationToken);
-        //}
+        public static bool TryGetDirectories(string path, out string[] directories)
+        {
+            try
+            {
+                directories = Directory.GetDirectories(path);
+                return true;
+            }
+            catch
+            {
+                directories = null;
+                return false;
+            }
+        }
 
         public static async Task CopyAsync(string sourceDir, string destinationDir, bool replaceFiles = true, int maxConcurrency = 1, CancellationToken cancellationToken = default)
         {
@@ -47,9 +49,11 @@ namespace EnvManager.Cli.Common.IO
 
             Directory.CreateDirectory(destinationDir);
 
-            matches.AsParallel()
+            matches
+                .Where(e => !e.Excluded && e.HasAccess)
+                .AsParallel()
                 .WithCancellation(cancellationToken)
-                .WithDegreeOfParallelism(maxConcurrency)
+                .WithDegreeOfParallelism(Math.Max(maxConcurrency, 1))
                 .ForAll(match =>
                 {
                     var relativePath = match.Path.ToRelativePath(baseDir);
@@ -60,6 +64,9 @@ namespace EnvManager.Cli.Common.IO
                         Directory.CreateDirectory(targetPath);
                         return;
                     }
+
+                    var parentDir = targetPath.GetParentDirectory();
+                    Directory.CreateDirectory(parentDir);
 
                     if (File.Exists(targetPath))
                     {

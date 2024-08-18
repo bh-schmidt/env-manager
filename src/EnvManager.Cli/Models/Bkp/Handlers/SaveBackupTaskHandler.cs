@@ -1,4 +1,5 @@
-﻿using EnvManager.Cli.Common.IO.Internal;
+﻿using EnvManager.Cli.Common.IO;
+using EnvManager.Cli.Common.IO.Internal;
 using EnvManager.Cli.Common.Loggers;
 using EnvManager.Common;
 using Newtonsoft.Json;
@@ -13,6 +14,7 @@ namespace EnvManager.Cli.Models.Bkp.Handlers
         {
             var filesJson = JsonConvert.SerializeObject(task.IncludePatterns, Formatting.Indented);
             var ignoreJson = JsonConvert.SerializeObject(task.ExcludePatterns, Formatting.Indented);
+
             Log.Information(
 $"""
 Parameters:
@@ -31,52 +33,82 @@ Exclude patterns: {ignoreJson}
 
             Log.Information($"Backup started");
 
-            var files = StaticFileMatcher.GetFiles(task.Source, task.IncludePatterns, task.ExcludePatterns);
+            FileMatcherFilters filter = new()
+            {
+                SourceDir = task.Source,
+                IncludePatterns = task.IncludePatterns,
+                ExcludePatterns = task.ExcludePatterns,
+            };
 
-            if (files.All(e => !e.Matched))
+            var matcher = new FileMatcher(filter)
+            {
+                MaxConcurrency = task.MaxConcurrency,
+            };
+
+            matcher.Match();
+
+            if (matcher.Matches.All(e => !e.Excluded))
             {
                 Log.ForContext(LogCtx.PipelineOnly)
                     .Information("No files matched.");
             }
 
+            var matches = matcher.Matches
+                .OrderBy(e => e.Path.Length)
+                .ThenBy(e => e.Path)
+                .ToArray();
+
             using (LogContext.Push(LogCtx.StepFileOnly))
             {
-                LogStepFile(files);
+                LogStepFile(matches);
             }
-
-            Log.Information($"Backup completed");
-        }
-
-        private void LogStepFile(List<FileMatch> files)
-        {
-            Log.Information("\nMatched files:");
 
             var targetDir = task.Target
                 .CombinePathWith($"{DateTime.Now:yyyy_MM_dd_HH_mm_ss}");
 
-            foreach (var file in files.Where(e => e.Matched))
+            Log.Information($"Copy started");
+
+            DirHelper
+                .CopyAsync(matches, task.Source, targetDir, false, task.MaxConcurrency)
+                .Wait();
+
+            Log.Information($"Backup completed");
+        }
+
+        private void LogStepFile(IEnumerable<FileSystemMatch> paths)
+        {
+            Log.Information("\nCopying paths:");
+
+            foreach (var fs in paths.Where(e => !e.Excluded && e.HasAccess))
             {
-                var sourceFile = Path.Combine(task.Source, file.Path);
-                var targetFile = Path.Combine(targetDir, file.Path);
-                var fileTargetFolder = Path.GetDirectoryName(targetFile);
-
-                Directory.CreateDirectory(fileTargetFolder);
-
-                File.Copy(sourceFile, targetFile, true);
-
-                var attributes = File.GetAttributes(sourceFile);
-                File.SetAttributes(targetFile, attributes);
-
-                Log.Information($"File copied. Source='{sourceFile}' Target='{targetFile}'");
+                var path = Path.Combine(task.Source, fs.Path);
+                Log.Information($"Copying: '{path}'");
             }
 
-            Log.Information("\nIgnored Files:");
+            Log.Information("\nExcluded paths:");
 
-            foreach (var file in files.Where(e => !e.Matched))
+            foreach (var fs in paths.Where(e => e.Excluded))
             {
-                var sourceFile = Path.Combine(task.Source, file.Path);
-                Log.Information($"Ignoring file. '{sourceFile}");
+                var path =
+                    fs.IsDirectory ?
+                    Path.Combine(task.Source, fs.Path, "*") :
+                    Path.Combine(task.Source, fs.Path);
+
+                Log.Information($"Excluded: '{path}");
             }
+
+            Log.Information("\nForbidden paths:");
+
+            foreach (var fs in paths.Where(e => !e.HasAccess))
+            {
+                var path =
+                    fs.IsDirectory ?
+                    Path.Combine(task.Source, fs.Path, "*") :
+                    Path.Combine(task.Source, fs.Path);
+
+                Log.Information($"Forbidden: '{path}");
+            }
+
 
             Log.Information(string.Empty);
         }

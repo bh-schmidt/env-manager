@@ -65,11 +65,7 @@ namespace EnvManager.Common
 
         public static string ToRelativePath(this string path, string relativeTo)
         {
-            int size = relativeTo.Length;
-            if (path[size] is '\\' or '/')
-                size++;
-
-            return path[size..];
+            return Path.GetRelativePath(relativeTo, path);
         }
 
         public static string[] SplitPath(this string path)

@@ -1,6 +1,4 @@
-﻿using EnvManager.Cli.Common.Concurrency;
-using EnvManager.Cli.Common.IO.Internal;
-using EnvManager.Cli.Common.Loggers;
+﻿using EnvManager.Cli.Common.Loggers;
 using EnvManager.Cli.LuaContexts;
 using EnvManager.Common;
 using ImprovedConsole;
@@ -8,72 +6,7 @@ using ImprovedConsole.CommandRunners;
 using ImprovedConsole.CommandRunners.Arguments;
 using ImprovedConsole.CommandRunners.Commands;
 using MoonSharp.Interpreter;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
-
-var sw = new Stopwatch();
-sw.Start();
-var filter = new FileMatcherFilters
-{
-    SourceDir = "c:/_w",
-    IgnorePatterns = [
-        "**/bin/**/*",
-        "**/obj/**/*",
-        "**/node_modules/**/*",
-        "**/.next/**/*",
-        "**/.vs/**/*",
-        "**/.env.local",
-        "**/.env.*.local"
-    ],
-};
-var matcher = new FileMatcher(filter)
-{
-    MaxConcurrency = 10
-};
-
-matcher.Match();
-sw.Stop();
-
-var res1 = matcher.Matches.Where(e => !e.IsDirectory && !e.Excluded).ToArray();
-var res2 = res1.DistinctBy(e => e.Path).ToArray();
-
-//39494
-//9118
-//4559
-//0.91
-
-//w 0.31
-
-Console.WriteLine(sw.Elapsed);
-
-
-var bag = new ConcurrentBag<int>();
-
-var box = new ConcurrentCollection<int>()
-{
-    MaxConcurrency = 10,
-};
-
-for (int i = 0; i < 100; i++)
-    box.Add(i);
-
-box.Foreach(i =>
-{
-    var newValue = i + 100;
-
-    if (newValue < 100000)
-        box.Add(newValue);
-});
-
-var x = box.ToArray();
-//var x = bag.ToArray();
-var count = x.Length;
-
-
-
-
-
 
 SetupLogger.Setup();
 

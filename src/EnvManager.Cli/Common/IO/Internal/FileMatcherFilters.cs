@@ -3,7 +3,7 @@
     public class FileMatcherFilters
     {
         public required string SourceDir { get; init; }
-        public IEnumerable<string> Patterns { get; init; } = ["**/*"];
-        public IEnumerable<string> IgnorePatterns { get; init; } = [];
+        public IEnumerable<string> IncludePatterns { get; init; } = ["**/*"];
+        public IEnumerable<string> ExcludePatterns { get; init; } = [];
     }
 }

@@ -6,6 +6,7 @@ using ImprovedConsole;
 using MoonSharp.Interpreter;
 using Serilog;
 using Serilog.Context;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace EnvManager.Cli.Models
@@ -42,7 +43,11 @@ Date: {LogCtx.GetCurrentDate()}
             {
                 try
                 {
+                    var sw = new Stopwatch();
+                    sw.Start();
                     Task.Run(stepContext);
+                    sw.Stop();
+                    Log.Information($"Elapsed: {sw.Elapsed}");
                 }
                 catch (Exception ex)
                 {
@@ -50,7 +55,7 @@ Date: {LogCtx.GetCurrentDate()}
                         ex.Message + '\n' + ex.StackTrace :
                         ex.Message;
 
-                    Log.Information("An error ocurred.");
+                    Log.Information("An error occurred.");
                     Log.Information(message);
                     throw;
                 }

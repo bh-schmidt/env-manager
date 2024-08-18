@@ -13,6 +13,7 @@ namespace EnvManager.Cli.Models.Bkp
         public string Target { get; set; }
         public DirectoryExistsAction DirExists { get; set; }
         public FileExistsAction FileExists { get; set; }
+        public int MaxConcurrency { get; set; }
 
         public void Run(StepContext context)
         {
@@ -73,7 +74,7 @@ Target: {Target}
             Log.Information($"Restoring the backup ({sourceDir}) to target directory ({Target})");
 
             var replaceFiles = FileExists == FileExistsAction.Replace;
-            DirHelper.CopyAsync(sourceDir, Target, replaceFiles).Wait();
+            DirHelper.CopyAsync(sourceDir, Target, replaceFiles, MaxConcurrency).Wait();
 
             Log.Information($"Backup restored.");
         }

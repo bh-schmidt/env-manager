@@ -8,9 +8,14 @@ namespace EnvManager.Cli.Common.IO.Internal
     public class FileMatcher(FileMatcherFilters options)
     {
         private ConcurrentCollection<PathMatcher> matchers;
-        private readonly string sourceDir = options.SourceDir;
-        private readonly IEnumerable<string> patterns = options.Patterns;
-        private readonly Regex[] ignoreFiles = options.IgnorePatterns
+
+        private readonly string sourceDir = options.SourceDir
+            .FixUserPath()
+            .FixWindowsDisk();
+
+        private readonly IEnumerable<string> patterns = options.IncludePatterns;
+
+        private readonly Regex[] ignoreFiles = options.ExcludePatterns
             .Select(file => Path.Combine(options.SourceDir, file))
             .Select(Path.GetFullPath)
             .Select(file => file.ToRelativePath(options.SourceDir))
@@ -50,10 +55,37 @@ namespace EnvManager.Cli.Common.IO.Internal
                 matchers.Add(matcher);
             }
 
-            matchers.Foreach(Search);
+            matchers.Foreach(matcher =>
+            {
+                if (!DirHelper.TryGetDirectories(matcher.CurrentDir, out var dirs))
+                {
+                    AddDir(matcher.CurrentDir, false);
+                    return;
+                }
+
+                AddDir(matcher.CurrentDir, true);
+
+                if (matcher.Parts.IsEmpty)
+                    return;
+
+                var currentPart = matcher.Parts.Span[0];
+                if (currentPart == "**")
+                {
+                    SearchAnyDirs(matcher, dirs);
+                    return;
+                }
+
+                if (matcher.Parts.Length == 1)
+                {
+                    SearchLast(matcher);
+                    return;
+                }
+
+                SearchDirs(matcher);
+            });
         }
 
-        private void Add(IEnumerable<string> paths, bool isDirectory)
+        private void AddFiles(IEnumerable<string> paths)
         {
             foreach (var path in paths)
             {
@@ -69,7 +101,7 @@ namespace EnvManager.Cli.Common.IO.Internal
                 {
                     Matches.Add(new()
                     {
-                        IsDirectory = isDirectory,
+                        IsDirectory = false,
                         Path = path,
                         Excluded = true
                     });
@@ -78,59 +110,112 @@ namespace EnvManager.Cli.Common.IO.Internal
 
                 Matches.Add(new()
                 {
-                    IsDirectory = isDirectory,
+                    IsDirectory = false,
                     Path = path,
                     Excluded = false
                 });
             }
         }
 
-        private void Search(PathMatcher matcher)
+        private void AddDirs(IEnumerable<string> paths)
         {
-            if (matcher.Parts.IsEmpty)
-                return;
-
-            var currentPart = matcher.Parts.Span[0];
-
-            if (currentPart == "**")
+            foreach (var path in paths)
             {
-                var dirs = Directory.GetDirectories(matcher.CurrentDir);
-                Add(dirs, true);
+                lock (HandledPaths)
+                {
+                    if (HandledPaths.Contains(path))
+                        continue;
 
+                    HandledPaths.Add(path);
+                }
+
+                if (ignoreFiles.Any(e => e.IsMatch(path)))
+                {
+                    Matches.Add(new()
+                    {
+                        IsDirectory = true,
+                        Path = path,
+                        Excluded = true,
+                    });
+                    continue;
+                }
+
+                Matches.Add(new()
+                {
+                    IsDirectory = true,
+                    Path = path,
+                    Excluded = false,
+                });
+            }
+        }
+
+        private void AddDir(string path, bool hasAccess)
+        {
+            lock (HandledPaths)
+            {
+                if (HandledPaths.Contains(path))
+                    return;
+
+                HandledPaths.Add(path);
+            }
+
+            if (ignoreFiles.Any(e => e.IsMatch(path)))
+            {
+                Matches.Add(new()
+                {
+                    IsDirectory = true,
+                    Path = path,
+                    Excluded = true,
+                    HasAccess = hasAccess
+                });
+                return;
+            }
+
+            Matches.Add(new()
+            {
+                IsDirectory = true,
+                Path = path,
+                Excluded = false,
+                HasAccess = hasAccess
+            });
+        }
+
+        private void SearchAnyDirs(PathMatcher matcher, string[] dirs)
+        {
+            matchers.Add(matcher with
+            {
+                Parts = matcher.Parts[1..]
+            });
+
+            foreach (var dir in dirs)
+            {
                 matchers.Add(matcher with
                 {
+                    CurrentDir = dir,
                     Parts = matcher.Parts[1..]
                 });
 
-                foreach (var dir in dirs)
+                matchers.Add(matcher with
                 {
-                    matchers.Add(matcher with
-                    {
-                        CurrentDir = dir,
-                        Parts = matcher.Parts[1..]
-                    });
-
-                    matchers.Add(matcher with
-                    {
-                        CurrentDir = dir
-                    });
-                }
-
-                return;
+                    CurrentDir = dir
+                });
             }
+        }
 
-            if (matcher.Parts.Length == 1)
-            {
-                var foundDirs = Directory.GetDirectories(matcher.CurrentDir, currentPart);
-                Add(foundDirs, true);
+        private void SearchLast(PathMatcher matcher)
+        {
+            var currentPart = matcher.Parts.Span[0];
+            var foundDirs = Directory.GetDirectories(matcher.CurrentDir, currentPart);
+            AddDirs(foundDirs);
 
-                var foundFiles = Directory.GetFiles(matcher.CurrentDir, currentPart);
-                Add(foundFiles, false);
-                return;
-            }
+            var foundFiles = Directory.GetFiles(matcher.CurrentDir, currentPart);
+            AddFiles(foundFiles);
+        }
 
+        private void SearchDirs(PathMatcher matcher)
+        {
+            var currentPart = matcher.Parts.Span[0];
             var directories = Directory.GetDirectories(matcher.CurrentDir, currentPart);
-            Add(directories, true);
 
             foreach (var directory in directories)
             {

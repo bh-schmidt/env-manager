@@ -11,6 +11,7 @@ namespace EnvManager.Cli.Models.Bkp
         public string Target { get; set; }
         public IEnumerable<string> IncludePatterns { get; set; }
         public IEnumerable<string> ExcludePatterns { get; set; }
+        public int MaxConcurrency { get; set; }
 
         public void Run(StepContext context)
         {
