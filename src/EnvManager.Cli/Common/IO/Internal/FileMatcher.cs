@@ -1,41 +1,44 @@
-﻿using EnvManager.Common;
+﻿using EnvManager.Cli.Common.Concurrency;
+using EnvManager.Common;
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace EnvManager.Cli.Common.IO.Internal
 {
-    public class FileMatcher
+    public class FileMatcher(FileMatcherFilters options)
     {
-        private readonly string sourceDir;
-        private readonly IEnumerable<string> patterns;
-        private readonly Regex[] ignoreFiles;
+        private ConcurrentCollection<PathMatcher> matchers;
+        private readonly string sourceDir = options.SourceDir;
+        private readonly IEnumerable<string> patterns = options.Patterns;
+        private readonly Regex[] ignoreFiles = options.IgnorePatterns
+            .Select(file => Path.Combine(options.SourceDir, file))
+            .Select(Path.GetFullPath)
+            .Select(file => file.ToRelativePath(options.SourceDir))
+            .Distinct()
+            .Select(file =>
+            {
+                var regex = RegexBuilder.BuildPathRegex(file);
+                return new Regex(regex, RegexOptions.RightToLeft);
+            })
+            .ToArray();
 
-        public FileMatcher(string sourceDir, IEnumerable<string> patterns, IEnumerable<string> ignorePatterns)
-        {
-            this.sourceDir = sourceDir;
-            this.patterns = patterns;
-            ignoreFiles = ignorePatterns
-                .Select(file => Path.Combine(sourceDir, file))
-                .Select(Path.GetFullPath)
-                .Select(file => file.ToRelativePath(sourceDir))
-                .Distinct()
-                .Select(file =>
-                {
-                    var regex = RegexBuilder.BuildPathRegex(file);
-                    return new Regex(regex, RegexOptions.RightToLeft);
-                })
-                .ToArray();
-        }
-
-        public List<FileSystemMatch> Matches { get; } = [];
+        public int MaxConcurrency { get; init; } = 1;
+        public ConcurrentBag<FileSystemMatch> Matches { get; } = [];
         public HashSet<string> HandledPaths { get; } = [];
 
         public void Match()
         {
+            matchers = new()
+            {
+                MaxConcurrency = MaxConcurrency
+            };
+
             foreach (var file in patterns)
             {
                 var matcher = new PathMatcher
                 {
                     Pattern = file,
+                    CurrentDir = sourceDir,
                     SourceFolder = sourceDir,
                     Parts = Path
                          .Combine(sourceDir, file)
@@ -44,18 +47,23 @@ namespace EnvManager.Cli.Common.IO.Internal
                          .SplitPath()
                 };
 
-                Search(sourceDir, matcher);
+                matchers.Add(matcher);
             }
+
+            matchers.Foreach(Search);
         }
 
         private void Add(IEnumerable<string> paths, bool isDirectory)
         {
             foreach (var path in paths)
             {
-                if (HandledPaths.Contains(path))
-                    continue;
+                lock (HandledPaths)
+                {
+                    if (HandledPaths.Contains(path))
+                        continue;
 
-                HandledPaths.Add(path);
+                    HandledPaths.Add(path);
+                }
 
                 if (ignoreFiles.Any(e => e.IsMatch(path)))
                 {
@@ -77,31 +85,35 @@ namespace EnvManager.Cli.Common.IO.Internal
             }
         }
 
-        private void Search(string currentDir, PathMatcher matcher)
+        private void Search(PathMatcher matcher)
         {
             if (matcher.Parts.IsEmpty)
                 return;
 
-            var currentPart = matcher.Parts[0];
+            var currentPart = matcher.Parts.Span[0];
 
             if (currentPart == "**")
             {
-                var dirs = Directory.GetDirectories(currentDir);
+                var dirs = Directory.GetDirectories(matcher.CurrentDir);
                 Add(dirs, true);
 
-                PathMatcher newMatcher = new()
+                matchers.Add(matcher with
                 {
-                    Pattern = matcher.Pattern,
-                    SourceFolder = matcher.SourceFolder,
                     Parts = matcher.Parts[1..]
-                };
-
-                Search(currentDir, newMatcher);
+                });
 
                 foreach (var dir in dirs)
                 {
-                    Search(dir, newMatcher);
-                    Search(dir, matcher);
+                    matchers.Add(matcher with
+                    {
+                        CurrentDir = dir,
+                        Parts = matcher.Parts[1..]
+                    });
+
+                    matchers.Add(matcher with
+                    {
+                        CurrentDir = dir
+                    });
                 }
 
                 return;
@@ -109,34 +121,33 @@ namespace EnvManager.Cli.Common.IO.Internal
 
             if (matcher.Parts.Length == 1)
             {
-                var foundDirs = Directory.GetDirectories(currentDir, currentPart);
+                var foundDirs = Directory.GetDirectories(matcher.CurrentDir, currentPart);
                 Add(foundDirs, true);
 
-                var foundFiles = Directory.GetFiles(currentDir, currentPart);
+                var foundFiles = Directory.GetFiles(matcher.CurrentDir, currentPart);
                 Add(foundFiles, false);
                 return;
             }
 
-            var directories = Directory.GetDirectories(currentDir, currentPart);
+            var directories = Directory.GetDirectories(matcher.CurrentDir, currentPart);
             Add(directories, true);
 
             foreach (var directory in directories)
             {
-                PathMatcher newMatcher = new()
+                matchers.Add(matcher with
                 {
-                    Pattern = matcher.Pattern,
-                    SourceFolder = matcher.SourceFolder,
+                    CurrentDir = directory,
                     Parts = matcher.Parts[1..]
-                };
-                Search(directory, newMatcher);
+                });
             }
         }
 
-        ref struct PathMatcher
+        record PathMatcher
         {
             public string Pattern { get; set; }
+            public string CurrentDir { get; set; }
             public string SourceFolder { get; set; }
-            public ReadOnlySpan<string> Parts { get; set; }
+            public Memory<string> Parts { get; set; }
         }
     }
 }

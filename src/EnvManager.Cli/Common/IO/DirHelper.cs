@@ -5,23 +5,31 @@ namespace EnvManager.Cli.Common.IO
 {
     public class DirHelper
     {
-        public static async Task CopyAsync(string sourceDir, string destinationDir, CancellationToken cancellationToken = default)
+        //public static async Task CopyAsync(string sourceDir, string destinationDir, int maxConcurrency = 1, CancellationToken cancellationToken = default)
+        //{
+        //    var filter = new FileMatcherFilters { SourceDir = sourceDir };
+        //    var matcher = new FileMatcher(filter)
+        //    {
+        //        MaxConcurrency = maxConcurrency
+        //    };
+        //    matcher.Match();
+
+        //    await CopyAsync(matcher.Matches, sourceDir, destinationDir, true, cancellationToken);
+        //}
+
+        public static async Task CopyAsync(string sourceDir, string destinationDir, bool replaceFiles = true, int maxConcurrency = 1, CancellationToken cancellationToken = default)
         {
-            var matcher = new FileMatcher(sourceDir, ["**/*"], []);
+            var filter = new FileMatcherFilters { SourceDir = sourceDir };
+            var matcher = new FileMatcher(filter)
+            {
+                MaxConcurrency = maxConcurrency
+            };
             matcher.Match();
 
-            await CopyAsync(matcher.Matches, sourceDir, destinationDir, true, cancellationToken);
+            await CopyAsync(matcher.Matches, sourceDir, destinationDir, replaceFiles, maxConcurrency, cancellationToken);
         }
 
-        public static async Task CopyAsync(string sourceDir, string destinationDir, bool replaceFiles, CancellationToken cancellationToken = default)
-        {
-            var matcher = new FileMatcher(sourceDir, ["**/*"], []);
-            matcher.Match();
-
-            await CopyAsync(matcher.Matches, sourceDir, destinationDir, replaceFiles, cancellationToken);
-        }
-
-        public static async Task CopyAsync(IEnumerable<FileSystemMatch> matches, string baseDir, string destinationDir, bool replaceFiles, CancellationToken cancellationToken = default)
+        public static async Task CopyAsync(IEnumerable<FileSystemMatch> matches, string baseDir, string destinationDir, bool replaceFiles = true, int maxConcurrency = 1, CancellationToken cancellationToken = default)
         {
             if (cancellationToken == default)
             {
@@ -38,30 +46,34 @@ namespace EnvManager.Cli.Common.IO
             await EnsureDownloadedAsync(files, cancellationToken);
 
             Directory.CreateDirectory(destinationDir);
-            foreach (var match in matches)
-            {
-                var relativePath = match.Path.ToRelativePath(baseDir);
-                var targetPath = destinationDir.CombinePathWith(relativePath);
 
-                if (match.IsDirectory)
+            matches.AsParallel()
+                .WithCancellation(cancellationToken)
+                .WithDegreeOfParallelism(maxConcurrency)
+                .ForAll(match =>
                 {
-                    Directory.CreateDirectory(targetPath);
-                    continue;
-                }
+                    var relativePath = match.Path.ToRelativePath(baseDir);
+                    var targetPath = destinationDir.CombinePathWith(relativePath);
 
-                if (File.Exists(targetPath))
-                {
-                    if (!replaceFiles)
-                        continue;
+                    if (match.IsDirectory)
+                    {
+                        Directory.CreateDirectory(targetPath);
+                        return;
+                    }
 
-                    File.SetAttributes(targetPath, FileAttributes.Normal);
-                }
+                    if (File.Exists(targetPath))
+                    {
+                        if (!replaceFiles)
+                            return;
 
-                File.Copy(match.Path, targetPath, true);
+                        File.SetAttributes(targetPath, FileAttributes.Normal);
+                    }
 
-                var sourceAtt = File.GetAttributes(match.Path);
-                File.SetAttributes(targetPath, sourceAtt);
-            }
+                    File.Copy(match.Path, targetPath, true);
+
+                    var sourceAtt = File.GetAttributes(match.Path);
+                    File.SetAttributes(targetPath, sourceAtt);
+                });
         }
 
         public static void Delete(string sourceDir)
@@ -71,6 +83,7 @@ namespace EnvManager.Cli.Common.IO
 
         public static void Delete(DirectoryInfo directory)
         {
+            directory.Delete(true);
             static void FileHandler(FileInfo file)
             {
                 file.Attributes = FileAttributes.Normal;
@@ -100,22 +113,13 @@ namespace EnvManager.Cli.Common.IO
             if (!pendingFiles.Any())
                 return;
 
-            List<Task> tasks = [];
-
-            foreach (var file in pendingFiles)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var task = Task.Factory.StartNew(() =>
-                {
-                    Download(file);
-                }, cancellationToken);
-                tasks.Add(task);
-            }
+            List<Task> tasks = pendingFiles
+                .Select(file => Task.Factory.StartNew(() => Download(file), cancellationToken))
+                .ToList();
 
             await Task.WhenAll(tasks);
+            await Task.Delay(1000, cancellationToken);
 
-            await Task.Delay(5000, cancellationToken);
             goto Start;
         }
 
