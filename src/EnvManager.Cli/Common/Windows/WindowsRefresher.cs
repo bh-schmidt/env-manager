@@ -25,6 +25,8 @@ namespace EnvManager.Cli.Common.Windows
             var variables = machineVariables
                 .ToDictionary();
 
+            Console.WriteLine("Loggin variables"); //remove
+
             foreach (var uv in userVariables
                 .Where(e => !mergedVars.Contains(e.Key)))
             {
@@ -47,7 +49,11 @@ namespace EnvManager.Cli.Common.Windows
             }
 
             foreach (var variable in variables)
+            {
+                Console.WriteLine($"{variable.Key}={variable.Value}"); //remove
+
                 Environment.SetEnvironmentVariable(variable.Key, variable.Value, EnvironmentVariableTarget.Process);
+            }
 
             var variablesToRemove = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process)
                 .Cast<DictionaryEntry>()
