@@ -4,7 +4,7 @@ trigger: none
 
 variables:
   - name: version
-    value: '0.0.10'
+    value: '0.0.11'
     
 resources:
    repositories:
