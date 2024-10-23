@@ -50,7 +50,8 @@ namespace EnvManager.Cli.Common.Windows
 
             foreach (var variable in variables)
             {
-                Console.WriteLine($"{variable.Key}={variable.Value}"); //remove
+                var value = Environment.GetEnvironmentVariable(variable.Key, EnvironmentVariableTarget.Process);
+                Console.WriteLine($"{variable.Key}={value} ----------> {variable.Value}"); //remove
 
                 Environment.SetEnvironmentVariable(variable.Key, variable.Value, EnvironmentVariableTarget.Process);
             }
