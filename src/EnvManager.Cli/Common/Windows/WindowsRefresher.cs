@@ -9,13 +9,13 @@ namespace EnvManager.Cli.Common.Windows
     {
         private readonly static HashSet<string> mergedVars = new(StringComparer.OrdinalIgnoreCase)
         {
-            "PATH",
+            "Path",
             "PATHEXT"
         };
 
         private readonly static Dictionary<string, string> processVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process)
             .Cast<DictionaryEntry>()
-            .ToDictionary(e => e.Key.ToString(), e => e.Value.ToString());
+            .ToDictionary(e => e.Key.ToString(), e => e.Value.ToString(), StringComparer.OrdinalIgnoreCase);
 
         public static void Refresh()
         {
@@ -91,7 +91,7 @@ namespace EnvManager.Cli.Common.Windows
 
         private static Dictionary<string, string> GetVariables(RegistryKey registryKey, string path)
         {
-            var result = new Dictionary<string, string>();
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var subKey = registryKey.OpenSubKey(path);
             var names = subKey.GetValueNames();
 

@@ -1,4 +1,5 @@
 ﻿using EnvManager.Cli.Common.Loggers;
+using EnvManager.Cli.Common.Windows;
 using EnvManager.Cli.LuaContexts;
 using EnvManager.Common;
 using ImprovedConsole;
@@ -7,6 +8,8 @@ using ImprovedConsole.CommandRunners.Arguments;
 using ImprovedConsole.CommandRunners.Commands;
 using MoonSharp.Interpreter;
 using System.Reflection;
+
+WindowsRefresher.Refresh();
 
 SetupLogger.Setup();
 
