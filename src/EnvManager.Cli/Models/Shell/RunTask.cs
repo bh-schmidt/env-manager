@@ -23,8 +23,6 @@ namespace EnvManager.Cli.Models.Shell
                 var path = Environment.GetEnvironmentVariable("PATH");
                 var bashPath = "C:\\Program Files\\Git\\bin";
 
-                Console.WriteLine($"PATH={path}"); //remove
-
                 if (!path.Contains(bashPath, StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (path.EndsWith(';'))

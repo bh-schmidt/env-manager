@@ -13,19 +13,16 @@ namespace EnvManager.Cli.Common.Windows
             "PATHEXT"
         };
 
-        private readonly static Dictionary<string, string> processVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process)
-            .Cast<DictionaryEntry>()
-            .ToDictionary(e => e.Key.ToString(), e => e.Value.ToString(), StringComparer.OrdinalIgnoreCase);
-
         public static void Refresh()
         {
             var machineVariables = GetVariables(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment");
             var userVariables = GetVariables(Registry.CurrentUser, @"Environment");
+            var processVariables = Environment.GetEnvironmentVariables(EnvironmentVariableTarget.Process)
+                .Cast<DictionaryEntry>()
+                .ToDictionary(e => e.Key.ToString(), e => e.Value.ToString(), StringComparer.OrdinalIgnoreCase);
 
             var variables = machineVariables
                 .ToDictionary();
-
-            Console.WriteLine("Loggin variables"); //remove
 
             foreach (var uv in userVariables
                 .Where(e => !mergedVars.Contains(e.Key)))
@@ -50,9 +47,6 @@ namespace EnvManager.Cli.Common.Windows
 
             foreach (var variable in variables)
             {
-                var value = Environment.GetEnvironmentVariable(variable.Key, EnvironmentVariableTarget.Process);
-                Console.WriteLine($"{variable.Key}={value} ----------> {variable.Value}"); //remove
-
                 Environment.SetEnvironmentVariable(variable.Key, variable.Value, EnvironmentVariableTarget.Process);
             }
 

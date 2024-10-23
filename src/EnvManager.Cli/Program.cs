@@ -9,8 +9,6 @@ using ImprovedConsole.CommandRunners.Commands;
 using MoonSharp.Interpreter;
 using System.Reflection;
 
-WindowsRefresher.Refresh();
-
 SetupLogger.Setup();
 
 UserData.RegisterAssembly(Assembly.GetCallingAssembly());

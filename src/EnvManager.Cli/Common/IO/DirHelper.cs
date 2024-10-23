@@ -90,7 +90,6 @@ namespace EnvManager.Cli.Common.IO
 
         public static void Delete(DirectoryInfo directory)
         {
-            directory.Delete(true);
             static void FileHandler(FileInfo file)
             {
                 file.Attributes = FileAttributes.Normal;
@@ -108,7 +107,7 @@ namespace EnvManager.Cli.Common.IO
                 DirHandler);
 
             directory.Attributes = FileAttributes.Normal;
-            directory.Delete();
+            directory.Delete(true);
         }
 
         private static async Task EnsureDownloadedAsync(IEnumerable<string> files, CancellationToken cancellationToken)
