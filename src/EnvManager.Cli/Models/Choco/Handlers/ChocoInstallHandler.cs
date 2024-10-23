@@ -38,7 +38,7 @@ namespace EnvManager.Cli.Models.Choco.Handlers
 
             ProcessStartInfo startInfo = new()
             {
-                FileName = "choco",
+                FileName = "C:\\ProgramData\\chocolatey\\bin\\choco.exe",
                 Arguments = $"install -y {package}",
                 CreateNoWindow = true,
                 RedirectStandardError = true,
